@@ -1,15 +1,3 @@
-# == Schema Information
-#
-# Table name: users
-#
-#  id              :integer          not null, primary key
-#  name            :string(255)
-#  email           :string(255)
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  password_digest :string(255)
-#
-
 require 'spec_helper'
 
 describe User do
@@ -21,34 +9,38 @@ describe User do
 
   subject { @user }
 
-  before do
-    @user = User.new(name: "Example User", email: "user@example.com",
-                     password: "foobar", password_confirmation: "foobar")
-  end
-
-  subject { @user }
-
   it { should respond_to(:name) }
   it { should respond_to(:email) }
-  it { should respond_to(:password_digest)}
+  it { should respond_to(:password_digest) }
   it { should respond_to(:password) }
-  it { should respond_to(:password_confirmation) }
-  it { should respond_to(:authenticate) }
   it { should respond_to(:password_confirmation) }
   it { should respond_to(:remember_token) }
   it { should respond_to(:authenticate) }
+  it { should respond_to(:admin) }
+  it { should respond_to(:authenticate) }
+  it { should be_valid }
+  it { should_not be_admin }
 
-  describe "when name not present" do
+  describe "with admin attribute set to 'true'" do
+    before do
+      @user.save!
+      @user.toggle!(:admin)
+    end
+
+    it { should be_admin }
+  end
+
+  describe "when name is not present" do
     before { @user.name = " " }
     it { should_not be_valid }
   end
 
-  describe "when email not present" do
-    before { @user.name = " " }
+  describe "when email is not present" do
+    before { @user.email = " " }
     it { should_not be_valid }
   end
 
-  describe "when a name is too long" do
+  describe "when name is too long" do
     before { @user.name = "a" * 51 }
     it { should_not be_valid }
   end
@@ -72,6 +64,15 @@ describe User do
         @user.should be_valid
       end
     end
+  end
+
+  describe "when email address is already taken" do
+    before do
+      user_with_same_email = @user.dup
+      user_with_same_email.save
+    end
+
+    it { should_not be_valid }
   end
 
   describe "when email address is already taken" do
@@ -119,7 +120,6 @@ describe User do
       specify { user_for_invalid_password.should be_false }
     end
   end
-
   describe "remember token" do
     before { @user.save }
     its(:remember_token) { should_not be_blank }
